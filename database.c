@@ -1,38 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "database.h"
-
-// Initialize the database (create tables if they don't exist)
-int initialize_database(Database *db, const char *db_name) {
-    db->db_name = strdup(db_name);
-    if (connect_to_database(db) != SQLITE_OK) {
-        fprintf(stderr, "Failed to connect to database: %s\n", db_name);
-        return -1;
-    }
-
-    const char *create_tables_query =
-        "CREATE TABLE IF NOT EXISTS Products ("
-        "product_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "product_name TEXT NOT NULL, "
-        "description TEXT, "
-        "category TEXT, "
-        "cost_price REAL NOT NULL, "
-        "selling_price REAL NOT NULL, "
-        "stock_quantity INTEGER NOT NULL, "
-        "reorder_level INTEGER NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS Suppliers ("
-        "supplier_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "supplier_name TEXT NOT NULL, "
-        "contact_info TEXT, "
-        "address TEXT"
-        ");"
-        "CREATE TABLE IF NOT EXISTS Transactions ("
-        "transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "product_id INTEGER NOT NULL, "
-        "transaction_type TEXT NOT NULL, "
-        "quantity INTEGER NOT NULL, "
         "transaction_date TEXT NOT NULL, "
         "customer_supplier_id INTEGER, "
         "FOREIGN KEY (product_id) REFERENCES Products(product_id)"
@@ -129,33 +94,49 @@ int delete_product(Database *db, int product_id) {
     return 0;
 }
 
-// List all products(       CHANGE 1        )
+// List all products
 int list_all_products(Database *db) {
     const char *query = "SELECT * FROM Products;";
     sqlite3_stmt *stmt;
 
+    // Prepare the SQL statement
     if (sqlite3_prepare_v2(db->connection, query, -1, &stmt, NULL) != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db->connection));
-        return -1;
+        return -1; // Error code for preparation failure
     }
 
+    // Print table headers
     printf("%-4s %-20s %-30s %-15s %-10s %-12s %-8s %-15s\n",
-       "ID", "Name", "Description", "Category", "Cost", "Selling", "Stock", "Reorder Level");
+           "ID", "Name", "Description", "Category", "Cost", "Selling", "Stock", "Reorder Level");
 
+    // Loop through each row returned by the query
+    int row_count = 0; // Counter for rows
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-    int id = sqlite3_column_int(stmt, 0);
-    const char *name = (const char *)sqlite3_column_text(stmt, 1);
-    const char *description = (const char *)sqlite3_column_text(stmt, 2);
-    const char *category = (const char *)sqlite3_column_text(stmt, 3);
-    double cost_price = sqlite3_column_double(stmt, 4);
-    double selling_price = sqlite3_column_double(stmt, 5);
-    int stock_quantity = sqlite3_column_int(stmt, 6);
-    int reorder_level = sqlite3_column_int(stmt, 7);
+        row_count++;
+        int id = sqlite3_column_int(stmt, 0);
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);
+        const char *description = (const char *)sqlite3_column_text(stmt, 2);
+        const char *category = (const char *)sqlite3_column_text(stmt, 3);
+        double cost_price = sqlite3_column_double(stmt, 4);
+        double selling_price = sqlite3_column_double(stmt, 5);
+        int stock_quantity = sqlite3_column_int(stmt, 6);
+        int reorder_level = sqlite3_column_int(stmt, 7);
 
-    printf("%-4d %-20s %-30s %-15s %-10.2f %-12.2f %-8d %-15d\n",
-           id, name, description, category, cost_price, selling_price, stock_quantity, reorder_level);
+        // Print each row
+        printf("%-4d %-20s %-30s %-15s %-10.2f %-12.2f %-8d %-15d\n",
+               id, name, description, category, cost_price, selling_price, stock_quantity, reorder_level);
     }
 
+    // Finalize the prepared statement to release resources
+    sqlite3_finalize(stmt);
+
+    // Check if no rows were returned
+    if (row_count == 0) {
+        printf("No products found in the database.\n");
+    }
+
+    return 0; // Success
+}
 
 // Sales Report
 int generate_sales_report(Database *db, const char *start_date, const char *end_date) {
@@ -325,3 +306,4 @@ int list_low_stock_products(Database *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
+~  
