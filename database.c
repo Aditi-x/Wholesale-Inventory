@@ -1,3 +1,38 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "database.h"
+
+// Initialize the database (create tables if they don't exist)
+int initialize_database(Database *db, const char *db_name) {
+    db->db_name = strdup(db_name);
+    if (connect_to_database(db) != SQLITE_OK) {
+        fprintf(stderr, "Failed to connect to database: %s\n", db_name);
+        return -1;
+    }
+
+    const char *create_tables_query =
+        "CREATE TABLE IF NOT EXISTS Products ("
+        "product_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "product_name TEXT NOT NULL, "
+        "description TEXT, "
+        "category TEXT, "
+        "cost_price REAL NOT NULL, "
+        "selling_price REAL NOT NULL, "
+        "stock_quantity INTEGER NOT NULL, "
+        "reorder_level INTEGER NOT NULL"
+        ");"
+        "CREATE TABLE IF NOT EXISTS Suppliers ("
+        "supplier_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "supplier_name TEXT NOT NULL, "
+        "contact_info TEXT, "
+        "address TEXT"
+        ");"
+        "CREATE TABLE IF NOT EXISTS Transactions ("
+        "transaction_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "product_id INTEGER NOT NULL, "
+        "transaction_type TEXT NOT NULL, "
+        "quantity INTEGER NOT NULL, "
         "transaction_date TEXT NOT NULL, "
         "customer_supplier_id INTEGER, "
         "FOREIGN KEY (product_id) REFERENCES Products(product_id)"
@@ -306,4 +341,3 @@ int list_low_stock_products(Database *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
-~  
