@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "database.h"
+#include "Database.h"
 
 // Function prototypes for menu operations
 void display_menu();
