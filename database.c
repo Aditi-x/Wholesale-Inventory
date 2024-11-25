@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Database.h"
+#include "database.h"
 
 // Initialize the database (create tables if they don't exist)
 int initialize_database(Database *db, const char *db_name) {
